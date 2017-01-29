@@ -1,0 +1,1427 @@
+--- a/arch/arm/boot/dts/Makefile
++++ b/arch/arm/boot/dts/Makefile
+@@ -795,7 +795,8 @@
+ 	zynq-zc770-xm012.dtb \
+ 	zynq-zc770-xm013.dtb \
+ 	zynq-zed.dtb \
+-	zynq-zybo.dtb
++	zynq-zybo.dtb \
++	zynq-zturn.dtb
+ dtb-$(CONFIG_MACH_ARMADA_370) += \
+ 	armada-370-db.dtb \
+ 	armada-370-dlink-dns327l.dtb \
+--- /dev/null
++++ b/arch/arm/boot/dts/zynq-zturn.dts
+@@ -0,0 +1,268 @@
++/*
++ *  Copyright (C) 2011 - 2014 Xilinx
++ *  Copyright (C) 2012 National Instruments Corp.
++ *
++ * This software is licensed under the terms of the GNU General Public
++ * License version 2, as published by the Free Software Foundation, and
++ * may be copied, distributed, and modified under those terms.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++/dts-v1/;
++/include/ "zynq-7000.dtsi"
++
++
++/ {
++	model = "MYIR Z-turn Development Board";
++	compatible = "myir,zynq-zturn", "xlnx,zynq-7000";
++
++	aliases {
++		ethernet0 = &gem0;
++		serial0 = &uart1;
++		serial1 = &uart0;
++		spi0 = &qspi;
++	};
++
++	memory {
++		device_type = "memory";
++		reg = <0x0 0x30000000>; // Reserved 256MB for xylonfb driver
++	};
++
++	chosen {
++		bootargs = "console=ttyPS0,115200 root=/dev/ram rw earlyprintk";
++		linux,stdout-path = "/amba/serial@e0001000";
++	};
++};
++
++&gpio0 {
++    emio-gpio-width = <64>;
++    gpio-mask-high = <0x0>;
++    gpio-mask-low = <0x5600>;
++    xlnx,emio-gpio-width = <0x40>;
++    xlnx,mio-gpio-mask = <0x5600>;
++};
++
++&qspi {
++	status = "okay";
++	is-dual = <0>;
++	num-cs = <1>;
++	xlnx,fb-clk = <0x1>;
++	xlnx,qspi-mode = <0x0>;
++	flash@0 {
++		compatible = "n25q128";
++		reg = <0x0>;
++		spi-tx-bus-width = <1>;
++		spi-rx-bus-width = <4>;
++		spi-max-frequency = <50000000>;
++		#address-cells = <1>;
++		#size-cells = <1>;
++		partition@qspi-boot {
++			label = "qspi-boot";
++			reg = <0x0 0x080000>;
++		};
++		partition@qspi-bootenv {
++			label = "qspi-bootenv";
++			reg = <0x080000 0x020000>;
++		};		
++		partition@qspi-bitstream {
++			label = "qspi-bitstream";
++			reg = <0x0A0000 0x460000>;
++		};		
++		partition@qspi-kernel {
++			label = "qspi-kernel";
++			reg = <0x500000 0x480000>;
++		};
++		partition@qspi-devicetree {
++			label = "qspi-devicetree";
++			reg = <0x980000 0x010000>;
++		};
++		partition@qspi-rootfs {
++			label = "qspi-rootfs";
++			reg = <0x990000 0x600000>;
++		};
++		partition@qspi-data {
++			label = "data";
++			reg = <0xF90000 0x070000>;
++		};
++	};
++};
++
++&usb0 {
++	status = "okay";
++	dr_mode = "host";
++	phy_type = "ulpi";	
++};
++
++&gem0 {
++	status = "okay";
++	phy-mode = "rgmii-id";
++	phy-handle = <&ethernet_phy>;
++
++	ethernet_phy: ethernet-phy@0 {
++		reg = <0>;
++	};
++};
++
++&sdhci0 {
++	status = "okay";
++    xlnx,has-cd = <0x1>;
++    xlnx,has-power = <0x0>;
++    xlnx,has-wp = <0x1>;
++};
++
++&uart0 {
++	status = "okay";
++    current-speed = <115200>;
++    port-number = <1>;
++    xlnx,has-modem = <0x0>;
++};
++
++&uart1 {
++	status = "okay";
++    current-speed = <115200>;
++    port-number = <0>;
++    xlnx,has-modem = <0x0>;
++};
++
++&i2c0 {
++	status = "okay";
++//  bus-id = <0x0>;
++    clock-frequency = <400000>;
++    xlnx,has-interrupt = <0x1>;
++	
++    adxl345@53 {
++        compatible = "adi,adxl34x","adxl34x";
++        reg = <0x53>;
++        interrupt-parent = <&intc>;
++        interrupts = < 0 31 4 >;
++    };
++
++    sii902x@3b {
++        compatible = "sii902x";
++        reg = <0x3b>;
++        interrupt-parent = <&intc>;
++        interrupts = < 0 29 4 >;
++		mode_str = "1920x1080";
++		bits-per-pixel = <16>;
++    };
++
++	stlm75@49 {
++		status = "okay";
++		compatible = "myir-stlm75x";
++		reg = <0x49>;
++		interrupts = < 0 32 4 >;
++	};
++};
++
++/*
++&i2c1 {
++	status = "okay";
++    clock-frequency = <400000>;
++    xlnx,has-interrupt = <0x1>;
++    
++	ft0x5x_ts@38 {
++        compatible = "ft5x06_ts";
++        reg = <0x38>;
++        tp_int = <&gpio0 106 1>;
++        tp_resetn = <&gpio0 107 1>;
++	    polling_mode = /bits/ 8 <0>;
++        multi_touch = /bits/ 8 <0>;
++    };	
++};
++*/
++
++&can0 {
++	status = "okay";
++};
++
++&amba {
++
++	gpio-leds {
++		compatible = "gpio-leds";
++		led_r {
++			label = "led_r";
++			gpios = <&gpio0 114 1>;
++			default-state = "on";
++			linux,default-trigger = "heartbeat";
++		};
++		led_g {
++			label = "led_g";
++			gpios = <&gpio0 115 1>;
++			default-state = "on";
++			linux,default-trigger = "heartbeat";
++		};
++		led_b {
++			label = "led_b";
++			gpios = <&gpio0 116 1>;
++			default-state = "on";
++			linux,default-trigger = "heartbeat";
++		};
++		usr_led1 {
++			label = "usr_led1";
++			gpios = <&gpio0 0 1>;
++			default-state = "off";
++			linux,default-trigger = "none";
++		};
++		usr_led2 {
++			label = "usr_led2";
++			gpios = <&gpio0 9 1>;
++			default-state = "off";
++			linux,default-trigger = "none";
++		};
++	};
++	
++    gpio-beep {
++            compatible = "gpio-beeper";
++            lable = "pl-beep";
++            gpios = <&gpio0 117 0>;
++        };
++	
++/* MYIR, added USR key */
++	gpio-keys {
++		compatible = "gpio-keys";
++		#address-cells = <1>;
++		#size-cells = <0>;
++		autorepeat;
++		K1 {
++			label = "K1";
++			gpios = <&gpio0 50 1>;
++			linux,code = <102>; /* KEY_HOME */
++			gpio-key,wakeup;
++			autorepeat;
++		};
++
++/*	Switches
++		sw1 {
++			label = "sw1";
++			gpios = <&gpio0 110 1>;
++			linux,code = <103>;
++			gpio-key,wakeup;
++			autorepeat;
++		};
++		sw2 {
++			label = "sw2";
++			gpios = <&gpio0 111 1>;
++			linux,code = <104>;
++			gpio-key,wakeup;
++			autorepeat;
++		};
++		sw3 {
++			label = "sw3";
++			gpios = <&gpio0 112 1>;
++			linux,code = <104>;
++			gpio-key,wakeup;
++			autorepeat;
++		};
++		sw4 {
++			label = "sw4";
++			gpios = <&gpio0 113 1>;
++			linux,code = <105>;
++			gpio-key,wakeup;
++			autorepeat;
++		}; */
++	};
++	
++};
+--- a/arch/arm/boot/Makefile
++++ b/arch/arm/boot/Makefile
+@@ -57,6 +57,9 @@
+ 
+ endif
+ 
++# Added by MYIR
++LOADADDR ?= 0x8000
++
+ ifneq ($(LOADADDR),)
+   UIMAGE_LOADADDR=$(LOADADDR)
+ else
+--- a/drivers/input/misc/adxl34x.c
++++ b/drivers/input/misc/adxl34x.c
+@@ -222,7 +222,7 @@
+ 	.free_fall_threshold = 8,
+ 	.free_fall_time = 0x20,
+ 	.data_rate = 8,
+-	.data_range = ADXL_FULL_RES,
++	.data_range = ADXL_FULL_RES|INT_INVERT, /* set to active LOW */
+ 
+ 	.ev_type = EV_ABS,
+ 	.ev_code_x = ABS_X,	/* EV_REL */
+--- /dev/null
++++ b/drivers/input/touchscreen/ft5x06_ts.h
+@@ -0,0 +1,84 @@
++#ifndef __LINUX_FT5X0X_TS_H__
++#define __LINUX_FT5X0X_TS_H__
++ 
++#define SCREEN_MAX_X    800
++#define SCREEN_MAX_Y    480
++#define PRESS_MAX       255
++ 
++#define FT5X0X_NAME    "ft5x06_ts"
++ /* Structure for ft5x0x */
++struct ft5x0x_ts_platform_data {
++		u32    tp_resetn;	   /* reset pin */
++		u32    tp_int;		   /* int pin */
++        u16    irq;            /* irq number of ts used */
++        u8     polling_mode;   /* set 1 for polling mode and 0 for interruputing mode */
++        u8     multi_touch;    /* set 1 if supporting multi-touch */
++};
++
++enum ft5x0x_ts_regs {
++    FT5X0X_REG_THGROUP                    = 0x80,
++    FT5X0X_REG_THPEAK                        = 0x81,
++    FT5X0X_REG_THCAL                        = 0x82,
++    FT5X0X_REG_THWATER                    = 0x83,
++    FT5X0X_REG_THTEMP                    = 0x84,
++    FT5X0X_REG_THDIFF                        = 0x85,                
++    FT5X0X_REG_CTRL                        = 0x86,
++    FT5X0X_REG_TIMEENTERMONITOR            = 0x87,
++    FT5X0X_REG_PERIODACTIVE                = 0x88,
++    FT5X0X_REG_PERIODMONITOR            = 0x89,
++    FT5X0X_REG_HEIGHT_B                    = 0x8a,
++    FT5X0X_REG_MAX_FRAME                    = 0x8b,
++    FT5X0X_REG_DIST_MOVE                    = 0x8c,
++    FT5X0X_REG_DIST_POINT                = 0x8d,
++    FT5X0X_REG_FEG_FRAME                    = 0x8e,
++    FT5X0X_REG_SINGLE_CLICK_OFFSET        = 0x8f,
++    FT5X0X_REG_DOUBLE_CLICK_TIME_MIN    = 0x90,
++    FT5X0X_REG_SINGLE_CLICK_TIME            = 0x91,
++    FT5X0X_REG_LEFT_RIGHT_OFFSET        = 0x92,
++    FT5X0X_REG_UP_DOWN_OFFSET            = 0x93,
++    FT5X0X_REG_DISTANCE_LEFT_RIGHT        = 0x94,
++    FT5X0X_REG_DISTANCE_UP_DOWN        = 0x95,
++    FT5X0X_REG_ZOOM_DIS_SQR                = 0x96,
++    FT5X0X_REG_RADIAN_VALUE                =0x97,
++    FT5X0X_REG_MAX_X_HIGH                           = 0x98,
++    FT5X0X_REG_MAX_X_LOW                         = 0x99,
++    FT5X0X_REG_MAX_Y_HIGH                        = 0x9a,
++    FT5X0X_REG_MAX_Y_LOW                         = 0x9b,
++    FT5X0X_REG_K_X_HIGH                        = 0x9c,
++    FT5X0X_REG_K_X_LOW                         = 0x9d,
++    FT5X0X_REG_K_Y_HIGH                        = 0x9e,
++    FT5X0X_REG_K_Y_LOW                         = 0x9f,
++    FT5X0X_REG_AUTO_CLB_MODE            = 0xa0,
++    FT5X0X_REG_LIB_VERSION_H                 = 0xa1,
++    FT5X0X_REG_LIB_VERSION_L                 = 0xa2,        
++    FT5X0X_REG_CIPHER                        = 0xa3,
++    FT5X0X_REG_MODE                        = 0xa4,
++    FT5X0X_REG_PMODE                        = 0xa5,    /* Power Consume Mode        */    
++    FT5X0X_REG_FIRMID                        = 0xa6,
++    FT5X0X_REG_STATE                        = 0xa7,
++    FT5X0X_REG_FT5201ID                    = 0xa8,
++    FT5X0X_REG_ERR                        = 0xa9,
++    FT5X0X_REG_CLB                        = 0xaa,
++};
++ 
++//FT5X0X_REG_PMODE
++#define PMODE_ACTIVE        0x00
++#define PMODE_MONITOR       0x01
++#define PMODE_STANDBY       0x02
++#define PMODE_HIBERNATE     0x03
++ 
++ 
++    #ifndef ABS_MT_TOUCH_MAJOR
++    #define ABS_MT_TOUCH_MAJOR    0x30    /* touching ellipse */
++    #define ABS_MT_TOUCH_MINOR    0x31    /* (omit if circular) */
++    #define ABS_MT_WIDTH_MAJOR    0x32    /* approaching ellipse */
++    #define ABS_MT_WIDTH_MINOR    0x33    /* (omit if circular) */
++    #define ABS_MT_ORIENTATION    0x34    /* Ellipse orientation */
++    #define ABS_MT_POSITION_X    0x35    /* Center X ellipse position */
++    #define ABS_MT_POSITION_Y    0x36    /* Center Y ellipse position */
++    #define ABS_MT_TOOL_TYPE    0x37    /* Type of touching device */
++    #define ABS_MT_BLOB_ID        0x38    /* Group set of pkts as blob */
++    #endif /* ABS_MT_TOUCH_MAJOR */
++ 
++ 
++#endif
+--- /dev/null
++++ b/drivers/input/touchscreen/ft5x0x.c
+@@ -0,0 +1,715 @@
++/* 
++ * drivers/input/touchscreen/ft5x0x_ts.c
++ *
++ * FocalTech ft5x0x TouchScreen driver. 
++ *
++ * Copyright (c) 2010  Focal tech Ltd.
++ *
++ * This software is licensed under the terms of the GNU General Public
++ * License version 2, as published by the Free Software Foundation, and
++ * may be copied, distributed, and modified under those terms.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ *
++ *    note: only support mulititouch    Wenfs 2010-10-01
++ */
++
++#include <linux/module.h>
++#include <linux/hrtimer.h>
++#include <linux/slab.h>
++#include <linux/device.h>
++#include <linux/platform_device.h>
++ 
++#include <linux/i2c.h>
++#include <linux/input.h>
++#include <linux/interrupt.h>
++#include <linux/delay.h>
++#ifdef CONFIG_HAS_EARLYSUSPEND
++#include <linux/earlysuspend.h>
++#endif
++
++#include <linux/of.h>
++#include <linux/of_gpio.h>
++#include <linux/of_device.h>
++#include "ft5x06_ts.h"
++
++#if 0
++#define DEBUG 	1
++#define DEBUG_0 1
++#endif
++ 
++#ifdef DEBUG_0
++#define TS_DEBUG(fmt,args...) printk(fmt, ##args )
++#else
++#define TS_DEBUG(fmt,args...)
++#endif
++ 
++#ifdef DEBUG
++#define TS_DEBUG1(fmt,args...) printk(fmt, ##args )
++#else
++#define TS_DEBUG1(fmt,args...)
++#endif
++ 
++static struct i2c_client *this_client;
++static struct ft5x0x_ts_platform_data *ts_plat_data;
++ 
++struct ts_event {
++    u16    x1;
++    u16    y1;
++    u16    x2;
++    u16    y2;
++    u16    x3;
++    u16    y3;
++    u16    x4;
++    u16    y4;
++    u16    x5;
++    u16    y5;
++    u16    pressure;
++    s16 touch_ID1;
++    s16 touch_ID2;
++    s16 touch_ID3;
++    s16 touch_ID4;
++    s16 touch_ID5;
++    u8  touch_point;
++};
++ 
++struct ft5x0x_ts_data {
++    struct input_dev    *input_dev;
++    struct ts_event        event;
++
++    struct delayed_work     poll_work;
++    int stop_poll_flag;
++    struct work_struct     pen_event_work;
++    struct workqueue_struct *ts_workqueue;
++	
++#ifdef CONFIG_HAS_EARLYSUSPEND
++    struct early_suspend    early_suspend;
++#endif
++};
++ 
++static int ft5x0x_i2c_rxdata(char *rxdata, int length)
++{
++    int ret;
++ 
++    struct i2c_msg msgs[] = {
++        {
++            .addr    = this_client->addr,
++            .flags    = 0,
++            .len    = 1,
++            .buf    = rxdata,
++        },
++        {
++            .addr    = this_client->addr,
++            .flags    = I2C_M_RD,
++            .len    = length,
++            .buf    = rxdata,
++        },
++    };
++ 
++    //msleep(1);
++    ret = i2c_transfer(this_client->adapter, msgs, 2);
++    if (ret < 0)
++        pr_err("msg %s i2c read error: %d\n", __func__, ret);
++    
++    return ret;
++}
++
++static void ft5x0x_ts_release(void)
++{
++    struct ft5x0x_ts_data *data = i2c_get_clientdata(this_client);
++    //TS_DEBUG("ft5x0x_ts_release\n");
++
++	if (ts_plat_data->multi_touch) {
++		input_report_abs(data->input_dev, ABS_MT_TOUCH_MAJOR, 0);
++		input_report_abs(data->input_dev, ABS_MT_WIDTH_MAJOR, 0);
++	} else {
++		input_report_abs(data->input_dev, ABS_PRESSURE, 0);
++		input_report_key(data->input_dev, BTN_TOUCH, 0);
++	}
++    input_sync(data->input_dev);
++}
++ 
++static int ft5x0x_read_data(void)
++{
++    struct ft5x0x_ts_data *data = i2c_get_clientdata(this_client);
++    struct ts_event *event = &data->event;
++    u8 buf[32] = {0};
++    int ret = -1;
++    int status = 0;
++
++	if (ts_plat_data->multi_touch) {
++		ret = ft5x0x_i2c_rxdata(buf, 31);
++	} else {
++		ret = ft5x0x_i2c_rxdata(buf, 7);
++	}
++    if (ret < 0) {
++        printk("%s read_data i2c_rxdata failed: %d\n", __func__, ret);
++        return ret;
++    }
++ 
++    memset(event, 0, sizeof(struct ts_event));
++    event->touch_point = buf[2] & 0x07;// 000 0111
++ 
++    if (event->touch_point == 0) {
++        ft5x0x_ts_release();
++        return 1; 
++    }
++
++	if (ts_plat_data->multi_touch) {
++		switch (event->touch_point) {
++		case 5:
++			event->x5 = (s16)(buf[0x1b] & 0x0F)<<8 | (s16)buf[0x1c];
++			event->y5 = (s16)(buf[0x1d] & 0x0F)<<8 | (s16)buf[0x1e];
++			status = (s16)((buf[0x1b] & 0xc0) >> 6);
++			event->touch_ID5=(s16)(buf[0x1D] & 0xF0)>>4;
++			if (status == 1) {
++				ft5x0x_ts_release();
++			}
++		case 4:
++			event->x4 = (s16)(buf[0x15] & 0x0F)<<8 | (s16)buf[0x16];
++			event->y4 = (s16)(buf[0x17] & 0x0F)<<8 | (s16)buf[0x18];
++			status = (s16)((buf[0x15] & 0xc0) >> 6);
++			event->touch_ID4=(s16)(buf[0x17] & 0xF0)>>4;
++			if (status == 1) {
++				ft5x0x_ts_release();
++			}
++		case 3:
++			event->x3 = (s16)(buf[0x0f] & 0x0F)<<8 | (s16)buf[0x10];
++			event->y3 = (s16)(buf[0x11] & 0x0F)<<8 | (s16)buf[0x12];
++			status = (s16)((buf[0x0f] & 0xc0) >> 6);
++			event->touch_ID3=(s16)(buf[0x11] & 0xF0)>>4;
++			if (status == 1) {
++				ft5x0x_ts_release();
++			}
++		case 2:
++			event->x2 = (s16)(buf[9] & 0x0F)<<8 | (s16)buf[10];
++			event->y2 = (s16)(buf[11] & 0x0F)<<8 | (s16)buf[12];
++			status = (s16)((buf[0x9] & 0xc0) >> 6);
++			event->touch_ID2=(s16)(buf[0x0b] & 0xF0)>>4;
++			if (status == 1) {
++				ft5x0x_ts_release();
++			}
++		case 1:
++			event->x1 = (s16)(buf[3] & 0x0F)<<8 | (s16)buf[4];
++			event->y1 = (s16)(buf[5] & 0x0F)<<8 | (s16)buf[6];
++			status = (s16)((buf[0x3] & 0xc0) >> 6);
++			event->touch_ID1=(s16)(buf[0x05] & 0xF0)>>4;
++			if (status == 1) {
++				ft5x0x_ts_release();
++			}
++			break;
++		default:
++			return -1;
++		}
++	} else {
++		if (event->touch_point == 1) {
++			event->x1 = (s16)(buf[3] & 0x0F)<<8 | (s16)buf[4];
++			event->y1 = (s16)(buf[5] & 0x0F)<<8 | (s16)buf[6];
++		}
++	}
++    event->pressure = 200;
++
++    dev_dbg(&this_client->dev, "%s: 1:%d %d 2:%d %d \n", __func__,
++			event->x1, event->y1, event->x2, event->y2);
++ 
++    return 0;
++}
++ 
++static void ft5x0x_report_value(void)
++{
++    struct ft5x0x_ts_data *data = i2c_get_clientdata(this_client);
++    struct ts_event *event = &data->event;
++ 
++	TS_DEBUG("==ft5x0x_report_value =\n");
++
++	if (ts_plat_data->multi_touch) {
++		switch(event->touch_point) {
++		case 5:
++			input_report_abs(data->input_dev, ABS_MT_TRACKING_ID, event->touch_ID5);
++			input_report_abs(data->input_dev, ABS_MT_TOUCH_MAJOR, event->pressure);
++			input_report_abs(data->input_dev, ABS_MT_POSITION_X, event->x5);
++			input_report_abs(data->input_dev, ABS_MT_POSITION_Y, event->y5);
++			input_report_abs(data->input_dev, ABS_MT_WIDTH_MAJOR, 1);
++			input_mt_sync(data->input_dev);
++			TS_DEBUG("===x2 = %d,y2 = %d ====\n",event->x2,event->y2);
++		case 4:
++			input_report_abs(data->input_dev, ABS_MT_TRACKING_ID, event->touch_ID4);
++			input_report_abs(data->input_dev, ABS_MT_TOUCH_MAJOR, event->pressure);
++			input_report_abs(data->input_dev, ABS_MT_POSITION_X, event->x4);
++			input_report_abs(data->input_dev, ABS_MT_POSITION_Y, event->y4);
++			input_report_abs(data->input_dev, ABS_MT_WIDTH_MAJOR, 1);
++			input_mt_sync(data->input_dev);
++			TS_DEBUG("===x2 = %d,y2 = %d ====\n",event->x2,event->y2);
++		case 3:
++			input_report_abs(data->input_dev, ABS_MT_TRACKING_ID, event->touch_ID3);
++			input_report_abs(data->input_dev, ABS_MT_TOUCH_MAJOR, event->pressure);
++			input_report_abs(data->input_dev, ABS_MT_POSITION_X, event->x3);
++			input_report_abs(data->input_dev, ABS_MT_POSITION_Y, event->y3);
++			input_report_abs(data->input_dev, ABS_MT_WIDTH_MAJOR, 1);
++			input_mt_sync(data->input_dev);
++			TS_DEBUG("===x2 = %d,y2 = %d ====\n",event->x2,event->y2);
++		case 2:
++			input_report_abs(data->input_dev, ABS_MT_TRACKING_ID, event->touch_ID2);
++			input_report_abs(data->input_dev, ABS_MT_TOUCH_MAJOR, event->pressure);
++			input_report_abs(data->input_dev, ABS_MT_POSITION_X, event->x2);
++			input_report_abs(data->input_dev, ABS_MT_POSITION_Y, event->y2);
++			input_report_abs(data->input_dev, ABS_MT_WIDTH_MAJOR, 1);
++			input_mt_sync(data->input_dev);
++			TS_DEBUG("===x2 = %d,y2 = %d ====\n",event->x2,event->y2);
++		case 1:
++			input_report_abs(data->input_dev, ABS_MT_TRACKING_ID, event->touch_ID1);
++			input_report_abs(data->input_dev, ABS_MT_TOUCH_MAJOR, event->pressure);
++			input_report_abs(data->input_dev, ABS_MT_POSITION_X, event->x1);
++			input_report_abs(data->input_dev, ABS_MT_POSITION_Y, event->y1);
++			input_report_abs(data->input_dev, ABS_MT_WIDTH_MAJOR, 1);
++			input_mt_sync(data->input_dev);
++		default:
++			TS_DEBUG("==touch_point default =\n");
++			break;
++		}
++	} else {
++		if (event->touch_point == 1) {
++			input_report_abs(data->input_dev, ABS_X, event->x1);
++			input_report_abs(data->input_dev, ABS_Y, event->y1);
++			input_report_abs(data->input_dev, ABS_PRESSURE, event->pressure);
++		}
++		input_report_key(data->input_dev, BTN_TOUCH, 1);
++	}
++    input_sync(data->input_dev);
++ 
++    dev_dbg(&this_client->dev, "%s: 1:%d %d 2:%d %d \n", __func__,
++			event->x1, event->y1, event->x2, event->y2);
++    TS_DEBUG1("1:(%d, %d) 2:(%d, %d) 3:(%d, %d) 4:(%d, %d) 5:(%d, %d)\n", 
++			  event->x1, event->y1, event->x2, event->y2, event->x3, event->y3,
++			  event->x4, event->y4, event->x5, event->y5);
++}    /*end ft5x0x_report_value*/
++
++/* Added by Kevin, test only */
++static void ft5x0x_poll_work(struct work_struct *work)
++{
++    int ret = -1;
++	struct delayed_work* dwork = to_delayed_work(work);
++	struct ft5x0x_ts_data *ts_data = container_of(dwork, struct ft5x0x_ts_data, poll_work);
++
++    ret = ft5x0x_read_data();
++    if (ret == 0) {
++        ft5x0x_report_value();
++    }
++
++    if (!ts_data->stop_poll_flag) {
++        queue_delayed_work(ts_data->ts_workqueue, &ts_data->poll_work, 2);
++    } else {
++        printk(KERN_ERR"stop polling...\n");
++    }
++}
++
++static void ft5x0x_ts_pen_irq_work(struct work_struct *work)
++{
++    int ret = -1;
++ 
++    TS_DEBUG("==work 1=\n");
++    ret = ft5x0x_read_data();    
++    if (ret == 0) {    
++        ft5x0x_report_value();
++    }
++    else
++        TS_DEBUG("data package read error\n");
++    TS_DEBUG("==work 2=\n");
++}
++
++static irqreturn_t ft5x0x_ts_interrupt(int irq, void *dev_id)
++{
++    struct ft5x0x_ts_data *ft5x0x_ts = dev_id;
++ 
++    TS_DEBUG("==int ft5x0x_ts_interrupt=\n");
++    if (!work_pending(&ft5x0x_ts->pen_event_work)) {
++        queue_work(ft5x0x_ts->ts_workqueue, &ft5x0x_ts->pen_event_work);
++    }
++ 
++    return IRQ_HANDLED;
++}
++ 
++#ifdef CONFIG_HAS_EARLYSUSPEND
++static void ft5x0x_ts_suspend(struct early_suspend *handler)
++{
++	//    struct ft5x0x_ts_data *ts;
++	//    ts =  container_of(handler, struct ft5x0x_ts_data, early_suspend);
++ 
++    TS_DEBUG("==ft5x0x_ts_suspend=\n");
++	//    disable_irq(this_client->irq);
++	//    disable_irq(IRQ_EINT(6));
++	//    cancel_work_sync(&ts->pen_event_work);
++	//    flush_workqueue(ts->ts_workqueue);
++    // ==set mode ==, 
++	//        ft5x0x_set_reg(FT5X0X_REG_PMODE, PMODE_HIBERNATE);
++}
++ 
++static void ft5x0x_ts_resume(struct early_suspend *handler)
++{
++    TS_DEBUG("==ft5x0x_ts_resume=\n");
++    // wake the mode
++	//    __gpio_as_output(GPIO_FT5X0X_WAKE);        
++	//    __gpio_clear_pin(GPIO_FT5X0X_WAKE);        //set wake = 0,base on system
++	//     msleep(100);
++	//    __gpio_set_pin(GPIO_FT5X0X_WAKE);            //set wake = 1,base on system
++	//    msleep(100);
++	//    enable_irq(this_client->irq);
++	//    enable_irq(IRQ_EINT(6));
++}
++#endif  //CONFIG_HAS_EARLYSUSPEND
++
++/* Parse the ft5x0x from device tree, MYiR */
++#if defined(CONFIG_OF)
++static const struct of_device_id ft5x0x_ts_match[];
++
++static struct ft5x0x_ts_platform_data *ft5x0x_parse_dt(struct device *dev)
++{
++	struct ft5x0x_ts_platform_data *pdata;
++	struct device_node *np = dev->of_node;
++	const struct of_device_id *match;
++
++	match = of_match_device(of_match_ptr(ft5x0x_ts_match), dev);
++	if (!match)
++		return ERR_PTR(-EINVAL);
++
++	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
++	if (!pdata)
++		return ERR_PTR(-ENOMEM);
++
++	if (of_property_read_u8(np, "polling_mode", &pdata->polling_mode)) {
++		dev_err(dev, "Failed to get polling_mode property, set to 0\n");
++		pdata->polling_mode = 0;
++	}
++
++	if (of_property_read_u8(np, "multi_touch", &pdata->multi_touch)) {
++		dev_err(dev, "Failed to get multi_touch property, set to 0\n");
++		pdata->multi_touch = 0;
++	}
++
++	pdata->tp_int = of_get_named_gpio_flags(np, "tp_int", 0, NULL);
++	if (gpio_is_valid(pdata->tp_int)) {	
++		//printk("tp int gpio=%d\n", pdata->tp_int);
++		if (gpio_request(pdata->tp_int, "touch irq")) {
++			printk("request touch gpio[%d] err\n", pdata->tp_int);
++			pdata->tp_int = -1;
++		} else {
++			pdata->irq = gpio_to_irq(pdata->tp_int);
++			//printk("touch tp_int irq=%d\n", pdata->irq);
++		}
++	}
++	
++	pdata->tp_resetn = of_get_named_gpio_flags(np, "tp_resetn", 0, NULL);
++	printk("tp reset gpio=%d\n", pdata->tp_resetn);
++
++	TS_DEBUG("ft5x0x detected, polling_mode: %d, multi_touch: %d\n",
++			pdata->polling_mode, pdata->multi_touch);
++
++	dev_dbg(dev, "ft5x0x detected, polling_mode: %d, multi_touch: %d\n",
++			pdata->polling_mode, pdata->multi_touch);
++
++	return pdata;
++}
++#else
++static struct ft5x0x_ts_platform_data *ft5x0x_parse_dt(struct device *dev)
++{
++	return NULL;
++}
++#endif
++
++static int 
++ft5x0x_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
++{
++    struct ft5x0x_ts_data *ft5x0x_ts;
++	struct device *dev = &client->dev;
++	struct device_node *np = dev->of_node;
++    struct input_dev *input_dev;
++    int err = 0;
++    
++    if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
++        err = -ENODEV;
++        goto exit_check_functionality_failed;
++    }
++
++	/*
++	 * Add by JBO
++	 * Use platform data to initialize ft5x0x
++	 */
++	this_client = client;
++	ts_plat_data = dev_get_platdata(&client->dev);
++	if (np) {
++		ts_plat_data = ft5x0x_parse_dt(dev);
++		if (IS_ERR(ts_plat_data))
++			goto exit_get_platdata_failed;
++
++		if (client->irq && !ts_plat_data->irq) {
++			ts_plat_data->irq = client->irq;
++		} else {
++			client->irq = ts_plat_data->irq;
++		}
++	} else if (!ts_plat_data)
++		goto exit_get_platdata_failed;
++
++	if (gpio_is_valid(ts_plat_data->tp_resetn)) {
++		err = gpio_request(ts_plat_data->tp_resetn, "tp_resetn");
++		if (!err) {
++			gpio_direction_output(ts_plat_data->tp_resetn, 1);
++			gpio_export(ts_plat_data->tp_resetn, 0);
++			// may be you need some delay here
++		} else {
++			printk("request tp_resetn[gpio %d] err:%d\n", 
++					ts_plat_data->tp_resetn, err);
++		}
++	}
++	//  Read device ID
++    err = 0xa1;
++    if (ft5x0x_i2c_rxdata((char *)&err, 2) < 0) {
++    	printk(KERN_ERR"ft5x0x read ID error!\n");
++		goto exit_check_functionality_failed;
++    }
++    printk(KERN_ERR "ft5x0x id: 0x%04X\n", err);
++    err = 0;
++
++    TS_DEBUG("==kzalloc=\n");
++    ft5x0x_ts = kzalloc(sizeof(*ft5x0x_ts), GFP_KERNEL);
++    if (!ft5x0x_ts)    {
++        err = -ENOMEM;
++        goto exit_alloc_data_failed;
++    }
++ 
++    TS_DEBUG("==i2c_set_clientdata=\n");
++	//    this_client = client;
++    i2c_set_clientdata(client, ft5x0x_ts);
++	//    i2c_jz_setclk(client, 100*1000);
++ 
++    TS_DEBUG("==INIT_WORK=\n");
++
++	if (ts_plat_data->polling_mode) {
++		/* Added by Kevin, test only */
++		TS_DEBUG("poll mode\n");	
++		INIT_DELAYED_WORK(&ft5x0x_ts->poll_work, ft5x0x_poll_work);
++		ft5x0x_ts->stop_poll_flag = 0;
++	} else {
++		INIT_WORK(&ft5x0x_ts->pen_event_work, ft5x0x_ts_pen_irq_work);
++	}
++
++    TS_DEBUG("==create_singlethread_workqueue=\n");
++    ft5x0x_ts->ts_workqueue = create_singlethread_workqueue(dev_name(&client->dev));
++    if (!ft5x0x_ts->ts_workqueue) {
++        err = -ESRCH;
++        goto exit_create_singlethread;
++    }
++
++	if (!ts_plat_data->polling_mode) {
++		err = request_irq(ts_plat_data->irq, ft5x0x_ts_interrupt, 
++				 IRQF_TRIGGER_FALLING, "ft5x0x_ts", ft5x0x_ts);
++		if (err < 0) {
++			dev_err(&client->dev, "ft5x0x_probe: request irq failed\n");
++			goto exit_irq_request_failed;
++		}
++	}
++
++    TS_DEBUG("==input_allocate_device=\n");
++    input_dev = input_allocate_device();
++    if (!input_dev) {
++        err = -ENOMEM;
++        dev_err(&client->dev, "failed to allocate input device\n");
++        goto exit_input_dev_alloc_failed;
++    }
++    
++    ft5x0x_ts->input_dev = input_dev;
++
++	if (ts_plat_data->multi_touch) {
++		set_bit(ABS_MT_TOUCH_MAJOR, input_dev->absbit);
++		set_bit(ABS_MT_POSITION_X, input_dev->absbit);
++		set_bit(ABS_MT_POSITION_Y, input_dev->absbit);
++		set_bit(ABS_MT_WIDTH_MAJOR, input_dev->absbit);
++ 
++		input_set_abs_params(input_dev,
++							 ABS_MT_POSITION_X, 0, SCREEN_MAX_X, 0, 0);
++		input_set_abs_params(input_dev,
++							 ABS_MT_POSITION_Y, 0, SCREEN_MAX_Y, 0, 0);
++		input_set_abs_params(input_dev,
++							 ABS_MT_TOUCH_MAJOR, 0, PRESS_MAX, 0, 0);
++		input_set_abs_params(input_dev,
++							 ABS_MT_WIDTH_MAJOR, 0, 200, 0, 0);
++	} else {
++		set_bit(ABS_X, input_dev->absbit);
++		set_bit(ABS_Y, input_dev->absbit);
++		set_bit(ABS_PRESSURE, input_dev->absbit);
++		set_bit(BTN_TOUCH, input_dev->keybit);
++ 
++		input_set_abs_params(input_dev, ABS_X, 0, SCREEN_MAX_X, 0, 0);
++		input_set_abs_params(input_dev, ABS_Y, 0, SCREEN_MAX_Y, 0, 0);
++		input_set_abs_params(input_dev,
++							 ABS_PRESSURE, 0, PRESS_MAX, 0 , 0);
++	}
++ 
++    set_bit(EV_ABS, input_dev->evbit);
++    set_bit(EV_KEY, input_dev->evbit);
++ 
++    input_dev->name        = FT5X0X_NAME;        //dev_name(&client->dev)
++    err = input_register_device(input_dev);
++    if (err) {
++        dev_err(&client->dev,
++				"ft5x0x_ts_probe: failed to register input device: %s\n",
++				dev_name(&client->dev));
++        goto exit_input_register_device_failed;
++    }
++ 
++#ifdef CONFIG_HAS_EARLYSUSPEND
++    TS_DEBUG("==register_early_suspend =\n");
++    ft5x0x_ts->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
++    ft5x0x_ts->early_suspend.suspend = ft5x0x_ts_suspend;
++    ft5x0x_ts->early_suspend.resume    = ft5x0x_ts_resume;
++    register_early_suspend(&ft5x0x_ts->early_suspend);
++#endif
++	//wake the CTPM
++	//    __gpio_as_output(GPIO_FT5X0X_WAKE);        
++	//    __gpio_clear_pin(GPIO_FT5X0X_WAKE);        //set wake = 0,base on system
++	//     msleep(100);
++	//    __gpio_set_pin(GPIO_FT5X0X_WAKE);            //set wake = 1,base on system
++	//    msleep(100);
++	//    ft5x0x_set_reg(0x88, 0x05); //5, 6,7,8
++	//    ft5x0x_set_reg(0x80, 30);
++	//    msleep(50);
++
++	if (!ts_plat_data->polling_mode) {
++		//   enable_irq(this_client->irq);
++		//    enable_irq(IRQ_EINT(6));
++
++	} else {
++		/* Added by Kevin, test only */
++		TS_DEBUG("queue delay work\n");	
++		queue_delayed_work(ft5x0x_ts->ts_workqueue, &ft5x0x_ts->poll_work, 2); 
++	}
++
++    TS_DEBUG("==probe over =, this_client->irq=%d\n\n\n", ts_plat_data->irq);
++    return 0;
++ 
++ exit_input_register_device_failed:
++    input_free_device(input_dev);
++ exit_input_dev_alloc_failed:
++	if (!ts_plat_data->polling_mode)
++		free_irq(ts_plat_data->irq, ft5x0x_ts);
++	//    free_irq(IRQ_EINT(6), ft5x0x_ts);
++ exit_irq_request_failed:
++
++	//exit_platform_data_null:
++	if (!ts_plat_data->polling_mode)
++		cancel_delayed_work_sync(&ft5x0x_ts->poll_work);
++	else
++		cancel_work_sync(&ft5x0x_ts->pen_event_work);
++
++    destroy_workqueue(ft5x0x_ts->ts_workqueue);
++ exit_create_singlethread:
++    TS_DEBUG("==singlethread error =\n\n\n");
++    i2c_set_clientdata(client, NULL);
++    kfree(ft5x0x_ts);
++ exit_alloc_data_failed:
++ exit_get_platdata_failed:
++ 	if (gpio_is_valid(ts_plat_data->tp_int)) {
++ 		gpio_free(ts_plat_data->tp_int);
++ 	}
++	if (gpio_is_valid(ts_plat_data->tp_resetn)) {
++		gpio_free(ts_plat_data->tp_resetn);
++	}
++ exit_check_functionality_failed:
++    return err;
++}
++ 
++static int ft5x0x_ts_remove(struct i2c_client *client)
++{
++    struct ft5x0x_ts_data *ft5x0x_ts = i2c_get_clientdata(client);
++    TS_DEBUG("==ft5x0x_ts_remove=\n");
++#ifdef CONFIG_HAS_EARLYSUSPEND
++    unregister_early_suspend(&ft5x0x_ts->early_suspend);
++#endif
++
++	if (!ts_plat_data->polling_mode) {
++		printk("free irq %d\n", client->irq);
++		free_irq(client->irq, ft5x0x_ts);
++		cancel_work_sync(&ft5x0x_ts->pen_event_work);
++	} else {
++		/* Added by Kevin, test only */
++		ft5x0x_ts->stop_poll_flag = 1;
++		cancel_delayed_work_sync(&ft5x0x_ts->poll_work);
++	}
++    destroy_workqueue(ft5x0x_ts->ts_workqueue);
++    i2c_set_clientdata(client, NULL);
++
++    input_unregister_device(ft5x0x_ts->input_dev);
++    kfree(ft5x0x_ts);
++	
++	if (gpio_is_valid(ts_plat_data->tp_resetn)) {
++		printk("gpio free %d\n", ts_plat_data->tp_resetn);
++		gpio_free(ts_plat_data->tp_resetn);
++	}
++
++    if (gpio_is_valid(ts_plat_data->tp_int)) {
++    	printk("gpio free %d\n", ts_plat_data->tp_int);
++    	gpio_free(ts_plat_data->tp_int);
++    }
++    return 0;
++}
++
++#if defined(CONFIG_OF)
++static const struct of_device_id ft5x0x_ts_match[] = {
++	{ .compatible = FT5X0X_NAME, },
++	{ },
++};
++MODULE_DEVICE_TABLE(of, ft5x0x_ts_match);
++#endif
++
++static const struct i2c_device_id ft5x0x_ts_id[] = {
++    { FT5X0X_NAME, 0 },
++	{ },
++};
++MODULE_DEVICE_TABLE(i2c, ft5x0x_ts_id);
++
++static struct i2c_driver ft5x0x_ts_driver = {
++    .probe        = ft5x0x_ts_probe,
++    .remove        = ft5x0x_ts_remove,
++    .id_table    = ft5x0x_ts_id,
++    .driver    = {
++        .name    = FT5X0X_NAME,
++		.owner    = THIS_MODULE,
++		.of_match_table = of_match_ptr(ft5x0x_ts_match),
++    },
++};
++
++static int __init ft5x0x_ts_init(void)
++{
++	int err = 0;
++	
++	if (i2c_add_driver(&ft5x0x_ts_driver) != 0) {
++		printk("i2c_add_driver: can't add i2c driver\n");
++		err = -ENODEV;
++		goto err_driver;
++	}
++
++	printk("ft5x0x_ts_init successful\n");
++	
++	return 0;
++
++ err_driver:
++	printk("ft5x0x_ts_init fail\n");
++	return err;
++}
++
++static void __exit ft5x0x_ts_exit(void)
++{
++	i2c_del_driver(&ft5x0x_ts_driver);
++	this_client = NULL;
++}
++
++ 
++module_init(ft5x0x_ts_init);
++module_exit(ft5x0x_ts_exit);
++ 
++MODULE_AUTHOR("Kevin Su<kevin.su@myirtech.com>");
++MODULE_DESCRIPTION("FocalTech ft5x0x TouchScreen driver");
++MODULE_LICENSE("GPL");
+--- a/drivers/input/touchscreen/Kconfig
++++ b/drivers/input/touchscreen/Kconfig
+@@ -1155,4 +1155,15 @@
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called bu21023_ts.
+ 
++config TOUCHSCREEN_FT5X0X
++	tristate "FT5X0X touchscreens"
++	depends on I2C
++	help
++	  Say Y here if you have a touchscreen using the ft5x0x chip
++
++	  If unsure, say N.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called zforce_ts.	  
++
+ endif
+--- a/drivers/input/touchscreen/Makefile
++++ b/drivers/input/touchscreen/Makefile
+@@ -93,5 +93,6 @@
+ obj-$(CONFIG_TOUCHSCREEN_SX8654)	+= sx8654.o
+ obj-$(CONFIG_TOUCHSCREEN_TPS6507X)	+= tps6507x-ts.o
+ obj-$(CONFIG_TOUCHSCREEN_ZFORCE)	+= zforce_ts.o
++obj-$(CONFIG_TOUCHSCREEN_FT5X0X)	+= ft5x0x.o
+ obj-$(CONFIG_TOUCHSCREEN_COLIBRI_VF50)	+= colibri-vf50-ts.o
+ obj-$(CONFIG_TOUCHSCREEN_ROHM_BU21023)	+= rohm_bu21023.o
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -816,6 +816,13 @@
+ 
+ 	  If unsure, say N
+ 
++config MYIR_STLM75X
++	tristate "MYIR stlm75x temperature sensor"
++	depends on ARCH_ZYNQ
++	    default y
++	help
++	  This option enables support for the stlm75x temperature driver.
++
+ source "drivers/misc/jesd204b/Kconfig"
+ source "drivers/misc/c2port/Kconfig"
+ source "drivers/misc/eeprom/Kconfig"
+--- a/drivers/misc/Makefile
++++ b/drivers/misc/Makefile
+@@ -56,6 +56,7 @@
+ obj-y				+= mic/
+ obj-$(CONFIG_GENWQE)		+= genwqe/
+ obj-$(CONFIG_ECHO)		+= echo/
++obj-$(CONFIG_MYIR_STLM75X)<--->+= myir_stlm75x.o /
+ obj-$(CONFIG_VEXPRESS_SYSCFG)	+= vexpress-syscfg.o
+ obj-$(CONFIG_CXL_BASE)		+= cxl/
+ obj-$(CONFIG_PANEL)             += panel.o
+--- /dev/null
++++ b/drivers/misc/myir_stlm75x.c
+@@ -0,0 +1,249 @@
++#include <linux/init.h>
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/fs.h>
++#include <linux/device.h>
++//#include <linux/sysdev.h>
++#include <asm/uaccess.h>
++#include <linux/slab.h>
++#include <linux/kdev_t.h>
++#include <linux/i2c.h>
++
++#define DEV_NAME		"myir-stlm75x"
++
++/*********************
++ *	Register define  *
++ *********************/
++#define REG_TEMP	0x0
++#define REG_CON		0x1
++#define REG_TOS		0x2
++#define REG_THYS	0x3
++
++#define MAX_CONV_MS	150
++#define SIGN_MASK	(0x1 << 15)
++#define TEMP_SHIFT	7
++#define TEMP_MASK	(0xFF << TEMP_SHIFT)
++#define DEGREE_PER_CNT	0.5
++
++struct myir_stlm75x_data {
++	struct i2c_client *client;
++	struct class class;
++	struct mutex mutex;
++	u16 temp_tos;
++	u16 temp_thys;
++	u16 temp_value;
++};
++
++inline int to_readable_value(u16 _value)
++{
++	int value;
++	if (_value & SIGN_MASK) {
++		value = -(~((_value & TEMP_MASK) >> TEMP_SHIFT) + 1);
++	} else {
++		value = ((_value & TEMP_MASK) >> TEMP_SHIFT);
++	}
++//	printk(KERN_ERR "value to read: %d\n", value);
++	return value;
++}
++
++#if 0
++inline u16 to_register_value(int/*float*/ degreex2)
++{
++	u16 ret;
++	if (degreex2 > 255) {
++		degreex2 = 255;
++	} else if (degreex2 < -255) {
++		degreex2 = -255;
++	}
++	ret = (u16)degreex2;
++	if (degreex2 >= 0) {
++		ret = (ret << TEMP_SHIFT) & TEMP_MASK;
++	} else {
++		ret = (ret << TEMP_SHIFT) & 0xFFFF;
++	}
++	printk(KERN_ERR "value to write: %#X\n", ret);
++	return ret;
++}
++#endif
++
++static int myir_stlm75x_readwrite(struct i2c_client *client,
++                   u16 wr_len, u8 *wr_buf,
++                   u16 rd_len, u8 *rd_buf)
++{
++    struct i2c_msg wrmsg[2];
++    int i = 0;
++    int ret;
++
++    if (wr_len) {
++        wrmsg[i].addr  = client->addr;
++        wrmsg[i].flags = 0;
++        wrmsg[i].len = wr_len;
++        wrmsg[i].buf = wr_buf;
++        i++;
++    }
++    if (rd_len) {
++        wrmsg[i].addr  = client->addr;
++        wrmsg[i].flags = I2C_M_RD;
++        wrmsg[i].len = rd_len;
++        wrmsg[i].buf = rd_buf;
++        i++;
++    }
++
++    ret = i2c_transfer(client->adapter, wrmsg, i);
++    if (ret < 0)
++        return ret;
++    if (ret != i)
++        return -EIO;
++
++    return 0;
++}
++
++static int myir_stlm75x_write_word(struct myir_stlm75x_data *pdata,
++                     u8 addr, u16 value)
++{
++    u8 wrbuf[3]={0};
++
++    wrbuf[0] = addr;
++    wrbuf[1] = (value>>8)&0xFF;
++    wrbuf[2] = value&0xFF;
++
++    return myir_stlm75x_readwrite(pdata->client, 3, wrbuf, 0, NULL);
++}
++
++static int myir_stlm75x_write_byte(struct myir_stlm75x_data *pdata,
++                     u8 addr, u8 value)
++{
++    u8 wrbuf[2]={0};
++
++    wrbuf[0] = addr;
++    wrbuf[1] = value;
++
++    return myir_stlm75x_readwrite(pdata->client, 2, wrbuf, 0, NULL);
++}
++
++static int myir_stlm75x_read_word(struct myir_stlm75x_data *pdata,
++                    u8 addr)
++{
++    u8 wrbuf[2], rdbuf[2]={0};
++    int error;
++
++    wrbuf[0] = addr;
++
++    error = myir_stlm75x_readwrite(pdata->client, 1, wrbuf, 2, rdbuf);
++    if (error)
++        return error;
++
++    return rdbuf[0]<<8|rdbuf[1];
++}
++
++static int myir_stlm75x_read_byte(struct myir_stlm75x_data *pdata,
++                    u8 addr)
++{
++    u8 wrbuf[2], rdbuf[2]={0};
++    int error;
++
++    wrbuf[0] = addr;
++
++    error = myir_stlm75x_readwrite(pdata->client, 1, wrbuf, 1, rdbuf);
++    if (error)
++        return error;
++
++    return rdbuf[0];
++}
++
++/* class attribute show function. */
++static ssize_t myir_stlm75x_show(struct class *cls, struct class_attribute *attr, char *buf)
++{
++	struct myir_stlm75x_data *pdata = (struct myir_stlm75x_data *)container_of(cls, struct myir_stlm75x_data, class);
++	int ret;
++	int value;
++	unsigned long start_time;
++	
++	mutex_lock(&pdata->mutex);
++	
++	start_time = jiffies;
++	pdata->temp_value = myir_stlm75x_read_word(pdata, REG_TEMP);
++//	printk(KERN_ERR "pdata->temp_value: %#X", pdata->temp_value);
++	value = to_readable_value(pdata->temp_value);
++	ret = sprintf(buf, "%d.%s\n", value/2, value%2?"5":"0");
++
++	while (time_before(jiffies, start_time + msecs_to_jiffies(MAX_CONV_MS))) schedule();
++	
++	mutex_unlock(&pdata->mutex);
++	
++	return ret;
++}
++
++/* Attributes declaration: Here I have declared only one attribute attr1 */
++static struct class_attribute myir_stlm75x_class_attrs[] = {
++	__ATTR(value_degree, S_IRUGO | S_IWUSR , myir_stlm75x_show, NULL), //use macro for permission
++	__ATTR_NULL
++};
++
++static int myir_stlm75x_probe(struct i2c_client *client,
++                     const struct i2c_device_id *id)
++{
++	int ret = 0;
++	struct myir_stlm75x_data *pdata = NULL;
++	
++	printk(KERN_ALERT "%s()\n", __func__);
++	
++	pdata = kmalloc(sizeof(struct myir_stlm75x_data), GFP_KERNEL);
++	if(!pdata) {
++		printk(KERN_ERR "No memory!\n");
++		return -ENOMEM;
++	}
++	memset(pdata, 0, sizeof(struct myir_stlm75x_data));
++
++	pdata->client = client;
++	
++	/* Init class */
++	mutex_init(&pdata->mutex);
++	pdata->class.name = DEV_NAME;
++	pdata->class.owner = THIS_MODULE;
++	pdata->class.class_attrs = myir_stlm75x_class_attrs;
++	ret = class_register(&pdata->class);
++	if(ret) {
++		printk(KERN_ERR "class_register failed!\n");
++		goto class_register_fail;
++	}
++	i2c_set_clientdata(client, pdata);
++	
++	printk(KERN_ALERT "%s driver initialized successfully!\n", DEV_NAME);
++	return 0;
++
++class_register_fail:
++	
++	return ret;
++}
++
++static int myir_stlm75x_remove(struct i2c_client *client)
++{
++    struct myir_stlm75x_data *pdata = i2c_get_clientdata(client);
++	
++	class_unregister(&pdata->class);
++	kfree(pdata);
++	i2c_set_clientdata(client, NULL);
++    return 0;
++}
++
++static const struct i2c_device_id myir_stlm75x_id[] = {
++    { DEV_NAME, 0 },
++    { }
++};
++
++static struct i2c_driver myir_stlm75x_driver = {
++    .driver = {
++        .owner	= THIS_MODULE,
++        .name	= DEV_NAME,
++    },
++    .id_table	= myir_stlm75x_id,
++    .probe		= myir_stlm75x_probe,
++    .remove		= myir_stlm75x_remove,
++};
++
++module_i2c_driver(myir_stlm75x_driver);
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Kevin Su <kevin.su@myirtech.com>");
++MODULE_DESCRIPTION("MYIR stlm75x temperature driver.");
+--- a/drivers/gpu/drm/xylon/xylon_encoder.c
++++ b/drivers/gpu/drm/xylon/xylon_encoder.c
+@@ -170,7 +170,7 @@
+ 	encoder->slave.base.possible_crtcs = 1;
+ 	ret = drm_encoder_init(dev, &encoder->slave.base,
+ 			       &xylon_drm_encoder_funcs,
+-			       DRM_MODE_ENCODER_TMDS);
++			       DRM_MODE_ENCODER_TMDS, NULL);
+ 	if (ret) {
+ 		DRM_ERROR("failed initialize encoder\n");
+ 		return ERR_PTR(ret);

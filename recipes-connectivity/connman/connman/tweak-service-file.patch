@@ -1,0 +1,19 @@
+--- a/src/connman.service.in
++++ b/src/connman.service.in
+@@ -4,7 +4,7 @@
+ Conflicts=shutdown.target
+ RequiresMountsFor=@localstatedir@/lib/connman
+ After=dbus.service network-pre.target systemd-sysusers.service
+-Before=network.target multi-user.target shutdown.target
++#Before=network.target multi-user.target shutdown.target
+ Wants=network.target
+ 
+ [Service]
+@@ -16,6 +16,7 @@
+ CapabilityBoundingSet=CAP_KILL CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_SYS_TIME CAP_SYS_MODULE
+ ProtectHome=true
+ ProtectSystem=full
++TimeoutSec=30
+ 
+ [Install]
+ WantedBy=multi-user.target
