@@ -11,5 +11,10 @@ SRC_URI_append_zybo-linux-bd-zynq7 = " \
 	"
 
 SRC_URI_append = " file://linux-xlnx-zturn.patch \
-	file://linux-xlnx-zturn-xylon.patch \
 	file://defconfig"
+
+KERNEL_DEVICETREE = "zynq-zturn.dtb"
+
+# If xylonfb support is desired, uncomment the following lines:
+#SRC_URI_append += " file://linux-xlnx-zturn-xylon.patch"
+#KERNEL_DEVICETREE += " zynq-zturn-xylon.dtb"

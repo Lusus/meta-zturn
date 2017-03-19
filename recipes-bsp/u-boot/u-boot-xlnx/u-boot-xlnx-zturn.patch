@@ -127,7 +127,7 @@
 +
 +#include <configs/zynq-common.h>
 +
-+#define CONFIG_BOOTARGS "console=ttyPS0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 rw earlyprintk"
++#define CONFIG_BOOTARGS "console=ttyPS0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 rw earlyprintk rootwait"
 +
 +#endif /* __CONFIG_ZYNQ_ZED_H */
 --- /dev/null
