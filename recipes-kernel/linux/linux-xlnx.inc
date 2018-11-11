@@ -16,10 +16,9 @@ SRC_URI = " \
 
 SRCREV_machine ?= "${SRCREV}"
 
-# linux-yocto recipes are awkward to use with quilt under Angstrom.
+# Uncomment the next line to use git instead of quilt for package management
 # require recipes-kernel/linux/linux-yocto.inc
 require recipes-kernel/linux/linux.inc
-require linux-dtb.inc
 S = "${WORKDIR}/git"
 
 DESCRIPTION = "Xilinx Kernel"

@@ -1,4 +1,4 @@
-inherit zynq7-platform-paths
+inherit xilinx-platform-init
 
 do_configure_prepend() {
 	if ${@bb.utils.contains('DEPENDS', 'virtual/zynq7-platform-init', 'true', 'false', d)}; then

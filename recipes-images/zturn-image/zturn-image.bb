@@ -1,4 +1,4 @@
-require recipes-images/angstrom/console-image.bb
+require recipes-core/images/core-image-base.bb
 
 IMAGE_FEATURES += " debug-tweaks"
 
