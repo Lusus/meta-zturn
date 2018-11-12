@@ -33,7 +33,7 @@
 #MACHINE ?= "genericx86-64"
 #MACHINE ?= "mpc8315e-rdb"
 #MACHINE ?= "edgerouter"
-MACHINE ?= "zturn-zync7"
+MACHINE ?= "zturn-zynq7"
 
 #
 # This sets the default machine to be qemux86 if no other machine is selected:
